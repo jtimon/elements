@@ -187,7 +187,8 @@ BOOST_AUTO_TEST_CASE(versionbits_test)
     }
 
     // Sanity checks of version bit deployments
-    const Consensus::Params &mainnetParams = Params(CBaseChainParams::MAIN).GetConsensus();
+    const boost::scoped_ptr<CChainParams> testParams(CChainParams::Factory(CBaseChainParams::MAIN));
+    const Consensus::Params &mainnetParams = testParams->GetConsensus();
     for (int i=0; i<(int) Consensus::MAX_VERSION_BITS_DEPLOYMENTS; i++) {
         uint32_t bitmask = VersionBitsMask(mainnetParams, (Consensus::DeploymentPos)i);
         // Make sure that no deployment tries to set an invalid bit.
@@ -213,7 +214,8 @@ BOOST_AUTO_TEST_CASE(versionbits_computeblockversion)
 {
     // Check that ComputeBlockVersion will set the appropriate bit correctly
     // on mainnet.
-    const Consensus::Params &mainnetParams = Params(CBaseChainParams::MAIN).GetConsensus();
+    const boost::scoped_ptr<CChainParams> testParams(CChainParams::Factory(CBaseChainParams::MAIN));
+    const Consensus::Params &mainnetParams = testParams->GetConsensus();
 
     // Use the TESTDUMMY deployment for testing purposes.
     int64_t bit = mainnetParams.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit;
