@@ -264,8 +264,10 @@ public:
         nDefaultPort = 7042;
         nPruneAfterHeight = 1000;
 
+        const CAsset someOtherAsset(uint256S("19f663de96be771f50cab5ded00256ffe63773e2eaa9a604092951cc3d7c6621"));
         const std::vector<GenesisReward> genesisRewards = {
             GenesisReward(MAX_MONEY, consensus.fedpegScript, BITCOINID, 100),
+            GenesisReward(100, defaultRegtestScript, someOtherAsset, 2),
         };
         genesis = CreateGenesisBlock(consensus, strNetworkID, 1296688602, 1, genesisRewards);
         consensus.hashGenesisBlock = genesis.GetHash();
