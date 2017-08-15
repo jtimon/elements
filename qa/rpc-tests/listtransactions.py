@@ -33,6 +33,8 @@ class ListTransactionsTest(BitcoinTestFramework):
 
     def run_test(self):
         
+        self.nodes[0].generate(101)
+        self.sync_all()
         #Need to dump all value out of op_return freebies
         self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 21000000, "", "", True)
         self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100, "", "", True)
