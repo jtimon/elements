@@ -103,6 +103,9 @@ class CCustomParams : public CChainParams {
         fMineBlocksOnDemand = GetBoolArg("-fmineblocksondemand", true);
         fMiningRequiresPeers = GetBoolArg("-fminingrequirespeers", false);
         anyonecanspend_aremine = GetBoolArg("-anyonecanspendaremine", true);
+
+        const CScript defaultRegtestScript(CScript() << OP_TRUE);
+        consensus.fedpegScript = StrHexToScriptWithDefault(GetArg("-fedpegscript", ""), defaultRegtestScript);
     }
 
 public:
@@ -144,7 +147,6 @@ public:
         UpdateFromArgs();
         const CScript defaultRegtestScript(CScript() << OP_TRUE);
         CScript genesisChallengeScript = StrHexToScriptWithDefault(GetArg("-signblockscript", ""), defaultRegtestScript);
-        consensus.fedpegScript = StrHexToScriptWithDefault(GetArg("-fedpegscript", ""), defaultRegtestScript);
         parentGenesisBlockHash = uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
 
         // Generate pegged Bitcoin asset

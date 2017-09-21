@@ -20,6 +20,9 @@ void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
     if (debugHelp) {
         strUsage += HelpMessageOpt("-regtest", "Enter regression test mode, which uses a special chain in which blocks can be solved instantly. "
                                    "This is intended for regression testing tools and app development.");
+        strUsage += HelpMessageGroup(_("Custom chain selection options (incomplete):"));
+        strUsage += HelpMessageOpt("-fedpegscript=<hex>", _("Change federated peg to use a different script.") +
+            " " + _("This creates a new chain with a different genesis block."));
     }
 }
 
