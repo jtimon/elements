@@ -10,7 +10,6 @@
 #include <vector>
 
 #define CHAINPARAMS_OLD_MAIN "old_main"
-#define CHAINPARAMS_REGTEST "elementsregtest"
 #define CHAINPARAMS_CUSTOM "custom"
 
 /**
