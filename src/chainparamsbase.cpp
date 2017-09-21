@@ -37,20 +37,6 @@ public:
 };
 
 /**
- * Main network for elements
- */
-class CBaseElementsParams : public CBaseChainParams
-{
-public:
-    CBaseElementsParams()
-    {
-        nRPCPort = 9041;
-        nMainchainRPCPort = 18332;
-        strDataDir = CHAINPARAMS_ELEMENTS;
-    }
-};
-
-/**
  * Regression test
  */
 class CBaseRegTestParams : public CBaseChainParams
@@ -88,8 +74,6 @@ std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain
 {
     if (chain == CBaseChainParams::MAIN)
         return std::unique_ptr<CBaseChainParams>(new CBaseMainParams());
-    else if (chain == CHAINPARAMS_ELEMENTS)
-        return std::unique_ptr<CBaseChainParams>(new CBaseElementsParams());
     else if (chain == CBaseChainParams::REGTEST)
         return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
     return std::unique_ptr<CBaseChainParams>(new CBaseCustomParams(chain));
