@@ -24,19 +24,10 @@ void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
 }
 
 /**
- * Old Main network
+ * All base chainparams for elements.
+ * If you feel you need to edit nRPCPort and nMainchainRPCPort,
+ * there's options to override these defaults.
  */
-class CBaseMainParams : public CBaseChainParams
-{
-public:
-    CBaseMainParams()
-    {
-        nRPCPort = 8332;
-        strDataDir = CHAINPARAMS_OLD_MAIN;
-    }
-};
-
-/** Custom tests */
 class CBaseCustomParams : public CBaseChainParams
 {
 public:
@@ -58,8 +49,6 @@ const CBaseChainParams& BaseParams()
 
 std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain)
 {
-    if (chain == CBaseChainParams::MAIN)
-        return std::unique_ptr<CBaseChainParams>(new CBaseMainParams());
     return std::unique_ptr<CBaseChainParams>(new CBaseCustomParams(chain));
 }
 
