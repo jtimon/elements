@@ -69,15 +69,7 @@ class Node():
         daemonstart = "%s/%sd -datadir=%s %s" % (daemon_bin_path, self.daemonname, self.datadir, extra_args)
         subprocess.Popen(daemonstart.split(), stdout=subprocess.PIPE)
 
-PORT_DEALER = SingletonPort()
-NODES = {
-    'bitcoin': Node('bitcoin', 'bitcoin', port_dealer=PORT_DEALER),
-    'sidechain': Node('elements', 'sidechain', port_dealer=PORT_DEALER),
-    'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
-}
-
-current_node = NODES['bitcoin']
-with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
+    def write_bitcoin_conf(self, f):
         f.write("regtest=1\n")
         f.write("rpcuser=bitcoinrpc\n")
         f.write("discover=0\n")
@@ -86,50 +78,74 @@ with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname
         f.write("txindex=1\n")
         f.write("daemon=1\n")
         f.write("listen=0\n")
-        f.write("rpcpassword="+NODES['bitcoin'].password+"\n")
-        f.write("rpcport="+str(NODES['bitcoin'].rpcport)+"\n")
+        f.write("rpcpassword="+self.password+"\n")
+        f.write("rpcport="+str(self.rpcport)+"\n")
+        f.write("discover=0\n")
 
-current_node = NODES['sidechain']
-with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
+    def write_sidechain_conf(self, f, mainchain_node, connect_port):
         f.write("regtest=1\n")
         f.write("rpcuser=sidechainrpc\n")
-        f.write("rpcpassword="+NODES['sidechain'].password+"\n")
-        f.write("rpcport="+str(NODES['sidechain'].rpcport)+"\n")
+        f.write("rpcpassword="+self.password+"\n")
+        f.write("rpcport="+str(self.rpcport)+"\n")
         f.write("discover=0\n")
         f.write("testnet=0\n")
         f.write("txindex=1\n")
         f.write("fedpegscript="+fedpeg_pubkey+"\n")
         f.write("daemon=1\n")
         f.write("mainchainrpchost=127.0.0.1\n")
-        f.write("mainchainrpcport="+str(NODES['bitcoin'].rpcport)+"\n")
+        f.write("mainchainrpcport="+str(mainchain_node.rpcport)+"\n")
         f.write("mainchainrpcuser=bitcoinrpc\n")
-        f.write("mainchainrpcpassword="+NODES['bitcoin'].password+"\n")
+        f.write("mainchainrpcpassword="+mainchain_node.password+"\n")
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
-        f.write("port="+str(NODES['sidechain'].port)+"\n")
-        f.write("connect=localhost:"+str(NODES['sidechain2'].port)+"\n")
+        f.write("port="+str(self.port)+"\n")
+        f.write("connect=localhost:"+str(connect_port)+"\n")
         f.write("listen=1\n")
+        f.write("discover=0\n")
 
-current_node = NODES['sidechain2']
-with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
+    def write_sidechain2_conf(self, f, mainchain_node, connect_port):
         f.write("regtest=1\n")
         f.write("rpcuser=sidechainrpc2\n")
-        f.write("rpcpassword="+NODES['sidechain2'].password+"\n")
-        f.write("rpcport="+str(NODES['sidechain2'].rpcport)+"\n")
+        f.write("rpcpassword="+self.password+"\n")
+        f.write("rpcport="+str(self.rpcport)+"\n")
         f.write("discover=0\n")
         f.write("testnet=0\n")
         f.write("txindex=1\n")
         f.write("fedpegscript="+fedpeg_pubkey+"\n")
         f.write("daemon=1\n")
         f.write("mainchainrpchost=127.0.0.1\n")
-        f.write("mainchainrpcport="+str(NODES['bitcoin'].rpcport)+"\n")
+        f.write("mainchainrpcport="+str(mainchain_node.rpcport)+"\n")
         f.write("mainchainrpcuser=bitcoinrpc\n")
-        f.write("mainchainrpcpassword="+NODES['bitcoin'].password+"\n")
+        f.write("mainchainrpcpassword="+mainchain_node.password+"\n")
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
-        f.write("port="+str(NODES['sidechain2'].port)+"\n")
-        f.write("connect=localhost:"+str(NODES['sidechain'].port)+"\n")
+        f.write("port="+str(self.port)+"\n")
+        f.write("connect=localhost:"+str(connect_port)+"\n")
         f.write("listen=1\n")
+        f.write("discover=0\n")
+        
+    def write_conf(self, mainchain_node=None, connect_port=None):
+        with open(os.path.join(self.datadir, "%s.conf" % self.daemonname), 'w') as f:
+            print('self.nodename', self.nodename)
+            if self.nodename == 'bitcoin_bitcoin':
+                self.write_bitcoin_conf(f)
+            elif self.nodename == 'elements_sidechain':
+                self.write_sidechain_conf(f, mainchain_node, connect_port)
+            elif self.nodename == 'elements_sidechain2':
+                self.write_sidechain2_conf(f, mainchain_node, connect_port)
+            else:
+                raise NotImplementedError
+
+PORT_DEALER = SingletonPort()
+NODES = {
+    'bitcoin': Node('bitcoin', 'bitcoin', port_dealer=PORT_DEALER),
+    'sidechain': Node('elements', 'sidechain', port_dealer=PORT_DEALER),
+    'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
+}
+
+NODES['bitcoin'].write_conf()
+NODES['sidechain'].write_conf(NODES['bitcoin'], NODES['sidechain2'].port)
+NODES['sidechain2'].write_conf(NODES['bitcoin'], NODES['sidechain'].port)
 
 try:
     # Default is 8, meaning 8+2 confirms for wallet acceptance normally
