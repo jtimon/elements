@@ -53,14 +53,18 @@ class SingletonPort():
         return self.port
 
 class Node():
-    def __init__(self, daemonname='elements', nodename='test', port_dealer=SingletonPort()):
+    def __init__(self, daemonname='elements', nodename='test', port_dealer=SingletonPort(), password=True):
         self.daemonname = daemonname
         self.nodename = '%s_%s' % (self.daemonname, nodename)
         self.port = port_dealer.next_port()
         self.rpcport = port_dealer.next_port()
         self.datadir = get_temp_dir(nodename)
-        self.password = get_pseudorandom_str()
         os.makedirs(self.datadir)
+        if password:
+            self.password = get_pseudorandom_str()
+        else:
+            self.password = None
+        self.rpccookiefile=self.datadir + "/regtest/.cookie"
 
     def __del__(self):
         shutil.rmtree(self.datadir)
@@ -77,8 +81,9 @@ class Node():
         f.write("testnet=0\n")
         f.write("txindex=1\n")
         f.write("daemon=1\n")
-        f.write("rpcpassword="+self.password+"\n")
-        f.write("rpcport="+str(self.rpcport)+"\n")
+        if self.password:
+            f.write("rpcpassword="+self.password+"\n")
+            f.write("rpcport="+str(self.rpcport)+"\n")
         f.write("discover=0\n")
         f.write("port="+str(self.port)+"\n")
         f.write("connect=localhost:"+str(connect_port)+"\n")
@@ -96,8 +101,11 @@ class Node():
         f.write("daemon=1\n")
         f.write("mainchainrpchost=127.0.0.1\n")
         f.write("mainchainrpcport="+str(mainchain_node.rpcport)+"\n")
-        f.write("mainchainrpcuser=bitcoinrpc\n")
-        f.write("mainchainrpcpassword="+mainchain_node.password+"\n")
+        if mainchain_node.password:
+            f.write("mainchainrpcuser=bitcoinrpc\n")
+            f.write("mainchainrpcpassword="+mainchain_node.password+"\n")
+        else:
+            f.write("mainchainrpccookiefile=%s\n" % mainchain_node.rpccookiefile)
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
         f.write("port="+str(self.port)+"\n")
@@ -117,8 +125,11 @@ class Node():
         f.write("daemon=1\n")
         f.write("mainchainrpchost=127.0.0.1\n")
         f.write("mainchainrpcport="+str(mainchain_node.rpcport)+"\n")
-        f.write("mainchainrpcuser=bitcoinrpc\n")
-        f.write("mainchainrpcpassword="+mainchain_node.password+"\n")
+        if mainchain_node.password:
+            f.write("mainchainrpcuser=bitcoinrpc\n")
+            f.write("mainchainrpcpassword="+mainchain_node.password+"\n")
+        else:
+            f.write("mainchainrpccookiefile=%s\n" % mainchain_node.rpccookiefile)
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
         f.write("port="+str(self.port)+"\n")
@@ -141,7 +152,7 @@ class Node():
 PORT_DEALER = SingletonPort()
 NODES = {
     'bitcoin': Node('bitcoin', 'bitcoin', port_dealer=PORT_DEALER),
-    'bitcoin2': Node('bitcoin', 'bitcoin2', port_dealer=PORT_DEALER),
+    'bitcoin2': Node('bitcoin', 'bitcoin2', port_dealer=PORT_DEALER, password=False),
     'sidechain': Node('elements', 'sidechain', port_dealer=PORT_DEALER),
     'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
 }
@@ -170,8 +181,11 @@ try:
     print("Daemons started")
     time.sleep(3)
 
+    with open(NODES['bitcoin2'].rpccookiefile, 'r') as f:
+        bitcoin2_rpccookie = f.readline()
+
     bitcoin = AuthServiceProxy("http://bitcoinrpc:"+NODES['bitcoin'].password+"@127.0.0.1:"+str(NODES['bitcoin'].rpcport))
-    bitcoin2 = AuthServiceProxy("http://bitcoinrpc:"+NODES['bitcoin2'].password+"@127.0.0.1:"+str(NODES['bitcoin2'].rpcport))
+    bitcoin2 = AuthServiceProxy("http://"+ bitcoin2_rpccookie +"@127.0.0.1:"+str(NODES['bitcoin2'].rpcport))
     sidechain = AuthServiceProxy("http://sidechainrpc:"+NODES['sidechain'].password+"@127.0.0.1:"+str(NODES['sidechain'].rpcport))
     sidechain2 = AuthServiceProxy("http://sidechainrpc2:"+NODES['sidechain2'].password+"@127.0.0.1:"+str(NODES['sidechain2'].rpcport))
     print("Daemons started, making blocks to get funds")
