@@ -86,7 +86,8 @@ sidechain2_pass = NODES['sidechain2'].password
 sidechain2_port = NODES['sidechain2'].rpcport
 sidechain2_p2p_port = NODES['sidechain2'].port
 
-with open(os.path.join(bitcoin_datadir, "bitcoin.conf"), 'w') as f:
+current_node = NODES['bitcoin']
+with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
         f.write("regtest=1\n")
         f.write("rpcuser=bitcoinrpc\n")
         f.write("rpcpassword="+bitcoin_pass+"\n")
@@ -98,7 +99,8 @@ with open(os.path.join(bitcoin_datadir, "bitcoin.conf"), 'w') as f:
         f.write("daemon=1\n")
         f.write("listen=0\n")
 
-with open(os.path.join(sidechain_datadir, "elements.conf"), 'w') as f:
+current_node = NODES['sidechain']
+with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
         f.write("regtest=1\n")
         f.write("rpcuser=sidechainrpc\n")
         f.write("rpcpassword="+sidechain_pass+"\n")
@@ -118,7 +120,8 @@ with open(os.path.join(sidechain_datadir, "elements.conf"), 'w') as f:
         f.write("connect=localhost:"+str(sidechain2_p2p_port)+"\n")
         f.write("listen=1\n")
 
-with open(os.path.join(sidechain2_datadir, "elements.conf"), 'w') as f:
+current_node = NODES['sidechain2']
+with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
         f.write("regtest=1\n")
         f.write("rpcuser=sidechainrpc2\n")
         f.write("rpcpassword="+sidechain2_pass+"\n")
