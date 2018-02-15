@@ -212,6 +212,7 @@ try:
     pegtxid1 = sidechain.claimpegin(raw, proof)
 
     # Will invalidate the block that confirms this transaction later
+    sync_all(bitcoin, bitcoin2)
     blockhash = sync_all(sidechain, sidechain2)
     sidechain.generate(5)
 
@@ -254,6 +255,7 @@ try:
         raw = bitcoin.getrawtransaction(txid)
         pegtxs += [sidechain.claimpegin(raw, proof)]
 
+    sync_all(bitcoin, bitcoin2)
     sync_all(sidechain, sidechain2)
 
     sidechain2.generate(1)
