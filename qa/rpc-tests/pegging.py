@@ -72,11 +72,6 @@ NODES = {
     'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
 }
 
-sidechain2_datadir = NODES['sidechain2'].datadir
-sidechain2_pass = NODES['sidechain2'].password
-sidechain2_port = NODES['sidechain2'].rpcport
-sidechain2_p2p_port = NODES['sidechain2'].port
-
 current_node = NODES['bitcoin']
 with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
         f.write("regtest=1\n")
@@ -108,15 +103,15 @@ with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
         f.write("port="+str(NODES['sidechain'].port)+"\n")
-        f.write("connect=localhost:"+str(sidechain2_p2p_port)+"\n")
+        f.write("connect=localhost:"+str(NODES['sidechain2'].port)+"\n")
         f.write("listen=1\n")
 
 current_node = NODES['sidechain2']
 with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
         f.write("regtest=1\n")
         f.write("rpcuser=sidechainrpc2\n")
-        f.write("rpcpassword="+sidechain2_pass+"\n")
-        f.write("rpcport="+str(sidechain2_port)+"\n")
+        f.write("rpcpassword="+NODES['sidechain2'].password+"\n")
+        f.write("rpcport="+str(NODES['sidechain2'].rpcport)+"\n")
         f.write("discover=0\n")
         f.write("testnet=0\n")
         f.write("txindex=1\n")
@@ -128,7 +123,7 @@ with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname
         f.write("mainchainrpcpassword="+NODES['bitcoin'].password+"\n")
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
-        f.write("port="+str(sidechain2_p2p_port)+"\n")
+        f.write("port="+str(NODES['sidechain2'].port)+"\n")
         f.write("connect=localhost:"+str(NODES['sidechain'].port)+"\n")
         f.write("listen=1\n")
 
@@ -139,14 +134,14 @@ try:
     sidechain_args = " -peginconfirmationdepth=10 "
 
     # Start daemons
-    print("Starting daemons at "+NODES['bitcoin'].datadir+", "+NODES['sidechain'].datadir+" and "+sidechain2_datadir)
+    print("Starting daemons at "+NODES['bitcoin'].datadir+", "+NODES['sidechain'].datadir+" and "+NODES['sidechain2'].datadir)
     bitcoindstart = bitcoin_bin_path+"/bitcoind -datadir="+NODES['bitcoin'].datadir
     subprocess.Popen(bitcoindstart.split(), stdout=subprocess.PIPE)
 
     sidechainstart = sidechain_bin_path+"/elementsd -datadir="+NODES['sidechain'].datadir + sidechain_args
     subprocess.Popen(sidechainstart.split(), stdout=subprocess.PIPE)
 
-    sidechain2start = sidechain_bin_path+"/elementsd -datadir="+sidechain2_datadir + sidechain_args
+    sidechain2start = sidechain_bin_path+"/elementsd -datadir="+NODES['sidechain2'].datadir + sidechain_args
     subprocess.Popen(sidechain2start.split(), stdout=subprocess.PIPE)
 
     print("Daemons started")
@@ -154,7 +149,7 @@ try:
 
     bitcoin = AuthServiceProxy("http://bitcoinrpc:"+NODES['bitcoin'].password+"@127.0.0.1:"+str(NODES['bitcoin'].rpcport))
     sidechain = AuthServiceProxy("http://sidechainrpc:"+NODES['sidechain'].password+"@127.0.0.1:"+str(NODES['sidechain'].rpcport))
-    sidechain2 = AuthServiceProxy("http://sidechainrpc2:"+sidechain2_pass+"@127.0.0.1:"+str(sidechain2_port))
+    sidechain2 = AuthServiceProxy("http://sidechainrpc2:"+NODES['sidechain2'].password+"@127.0.0.1:"+str(NODES['sidechain2'].rpcport))
     print("Daemons started, making blocks to get funds")
 
     bitcoin.generate(101)
