@@ -65,6 +65,10 @@ class Node():
     def __del__(self):
         shutil.rmtree(self.datadir)
 
+    def init_daemon(self, daemon_bin_path, extra_args=''):
+        daemonstart = "%s/%sd -datadir=%s %s" % (daemon_bin_path, self.daemonname, self.datadir, extra_args)
+        subprocess.Popen(daemonstart.split(), stdout=subprocess.PIPE)
+
 PORT_DEALER = SingletonPort()
 NODES = {
     'bitcoin': Node('bitcoin', 'bitcoin', port_dealer=PORT_DEALER),
@@ -128,21 +132,15 @@ with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname
         f.write("listen=1\n")
 
 try:
-
     # Default is 8, meaning 8+2 confirms for wallet acceptance normally
     # this will require 10+2.
     sidechain_args = " -peginconfirmationdepth=10 "
 
     # Start daemons
     print("Starting daemons at "+NODES['bitcoin'].datadir+", "+NODES['sidechain'].datadir+" and "+NODES['sidechain2'].datadir)
-    bitcoindstart = bitcoin_bin_path+"/bitcoind -datadir="+NODES['bitcoin'].datadir
-    subprocess.Popen(bitcoindstart.split(), stdout=subprocess.PIPE)
-
-    sidechainstart = sidechain_bin_path+"/elementsd -datadir="+NODES['sidechain'].datadir + sidechain_args
-    subprocess.Popen(sidechainstart.split(), stdout=subprocess.PIPE)
-
-    sidechain2start = sidechain_bin_path+"/elementsd -datadir="+NODES['sidechain2'].datadir + sidechain_args
-    subprocess.Popen(sidechain2start.split(), stdout=subprocess.PIPE)
+    NODES['bitcoin'].init_daemon(bitcoin_bin_path)
+    NODES['sidechain'].init_daemon(sidechain_bin_path, sidechain_args)
+    NODES['sidechain2'].init_daemon(sidechain_bin_path, sidechain_args)
 
     print("Daemons started")
     time.sleep(3)
