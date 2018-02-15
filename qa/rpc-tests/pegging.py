@@ -72,10 +72,6 @@ NODES = {
     'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
 }
 
-bitcoin_datadir = NODES['bitcoin'].datadir
-bitcoin_pass = NODES['bitcoin'].password
-bitcoin_port = NODES['bitcoin'].rpcport
-
 sidechain_datadir = NODES['sidechain'].datadir
 sidechain_pass = NODES['sidechain'].password
 sidechain_port = NODES['sidechain'].rpcport
@@ -90,14 +86,14 @@ current_node = NODES['bitcoin']
 with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
         f.write("regtest=1\n")
         f.write("rpcuser=bitcoinrpc\n")
-        f.write("rpcpassword="+bitcoin_pass+"\n")
-        f.write("rpcport="+str(bitcoin_port)+"\n")
         f.write("discover=0\n")
         f.write("listen=0\n")
         f.write("testnet=0\n")
         f.write("txindex=1\n")
         f.write("daemon=1\n")
         f.write("listen=0\n")
+        f.write("rpcpassword="+NODES['bitcoin'].password+"\n")
+        f.write("rpcport="+str(NODES['bitcoin'].rpcport)+"\n")
 
 current_node = NODES['sidechain']
 with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname), 'w') as f:
@@ -111,9 +107,9 @@ with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname
         f.write("fedpegscript="+fedpeg_pubkey+"\n")
         f.write("daemon=1\n")
         f.write("mainchainrpchost=127.0.0.1\n")
-        f.write("mainchainrpcport="+str(bitcoin_port)+"\n")
+        f.write("mainchainrpcport="+str(NODES['bitcoin'].rpcport)+"\n")
         f.write("mainchainrpcuser=bitcoinrpc\n")
-        f.write("mainchainrpcpassword="+bitcoin_pass+"\n")
+        f.write("mainchainrpcpassword="+NODES['bitcoin'].password+"\n")
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
         f.write("port="+str(sidechain1_p2p_port)+"\n")
@@ -132,9 +128,9 @@ with open(os.path.join(current_node.datadir, "%s.conf" % current_node.daemonname
         f.write("fedpegscript="+fedpeg_pubkey+"\n")
         f.write("daemon=1\n")
         f.write("mainchainrpchost=127.0.0.1\n")
-        f.write("mainchainrpcport="+str(bitcoin_port)+"\n")
+        f.write("mainchainrpcport="+str(NODES['bitcoin'].rpcport)+"\n")
         f.write("mainchainrpcuser=bitcoinrpc\n")
-        f.write("mainchainrpcpassword="+bitcoin_pass+"\n")
+        f.write("mainchainrpcpassword="+NODES['bitcoin'].password+"\n")
         f.write("validatepegin=1\n")
         f.write("validatepegout=0\n")
         f.write("port="+str(sidechain2_p2p_port)+"\n")
@@ -148,8 +144,8 @@ try:
     sidechain_args = " -peginconfirmationdepth=10 "
 
     # Start daemons
-    print("Starting daemons at "+bitcoin_datadir+", "+sidechain_datadir+" and "+sidechain2_datadir)
-    bitcoindstart = bitcoin_bin_path+"/bitcoind -datadir="+bitcoin_datadir
+    print("Starting daemons at "+NODES['bitcoin'].datadir+", "+sidechain_datadir+" and "+sidechain2_datadir)
+    bitcoindstart = bitcoin_bin_path+"/bitcoind -datadir="+NODES['bitcoin'].datadir
     subprocess.Popen(bitcoindstart.split(), stdout=subprocess.PIPE)
 
     sidechainstart = sidechain_bin_path+"/elementsd -datadir="+sidechain_datadir + sidechain_args
@@ -161,7 +157,7 @@ try:
     print("Daemons started")
     time.sleep(3)
 
-    bitcoin = AuthServiceProxy("http://bitcoinrpc:"+bitcoin_pass+"@127.0.0.1:"+str(bitcoin_port))
+    bitcoin = AuthServiceProxy("http://bitcoinrpc:"+NODES['bitcoin'].password+"@127.0.0.1:"+str(NODES['bitcoin'].rpcport))
     sidechain = AuthServiceProxy("http://sidechainrpc:"+sidechain_pass+"@127.0.0.1:"+str(sidechain_port))
     sidechain2 = AuthServiceProxy("http://sidechainrpc2:"+sidechain2_pass+"@127.0.0.1:"+str(sidechain2_port))
     print("Daemons started, making blocks to get funds")
