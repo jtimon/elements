@@ -52,24 +52,36 @@ class SingletonPort():
         self.port = self.port + 1
         return self.port
 
-PORT_DEALER = SingletonPort()
+class Node():
+    def __init__(self, nodename='test', port_dealer=SingletonPort()):
+        self.nodename = nodename
+        self.port = port_dealer.next_port()
+        self.rpcport = port_dealer.next_port()
+        self.datadir = get_temp_dir(nodename)
+        self.password = get_pseudorandom_str()
+        os.makedirs(self.datadir)
+
     
-bitcoin_datadir = get_temp_dir('bitcoin')
-bitcoin_pass = get_pseudorandom_str()
-sidechain_datadir = get_temp_dir('sidechain')
-sidechain_pass = get_pseudorandom_str()
-sidechain2_datadir = get_temp_dir('sidechain2')
-sidechain2_pass = get_pseudorandom_str()
+PORT_DEALER = SingletonPort()
+NODES = {
+    'bitcoin': Node('bitcoin', port_dealer=PORT_DEALER),
+    'sidechain': Node('sidechain', port_dealer=PORT_DEALER),
+    'sidechain2': Node('sidechain2', port_dealer=PORT_DEALER),
+}
+    
+bitcoin_datadir = NODES['bitcoin'].datadir
+bitcoin_pass = NODES['bitcoin'].password
+bitcoin_port = NODES['bitcoin'].rpcport
 
-bitcoin_port = PORT_DEALER.next_port()
-sidechain_port = PORT_DEALER.next_port()
-sidechain2_port = PORT_DEALER.next_port()
-sidechain1_p2p_port = PORT_DEALER.next_port()
-sidechain2_p2p_port = PORT_DEALER.next_port()
+sidechain_datadir = NODES['sidechain'].datadir
+sidechain_pass = NODES['sidechain'].password
+sidechain_port = NODES['sidechain'].rpcport
+sidechain1_p2p_port = NODES['sidechain'].port
 
-os.makedirs(bitcoin_datadir)
-os.makedirs(sidechain_datadir)
-os.makedirs(sidechain2_datadir)
+sidechain2_datadir = NODES['sidechain2'].datadir
+sidechain2_pass = NODES['sidechain2'].password
+sidechain2_port = NODES['sidechain2'].rpcport
+sidechain2_p2p_port = NODES['sidechain2'].port
 
 with open(os.path.join(bitcoin_datadir, "bitcoin.conf"), 'w') as f:
         f.write("regtest=1\n")
