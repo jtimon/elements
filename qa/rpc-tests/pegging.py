@@ -146,10 +146,14 @@ NODES = {
     'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
 }
 
+time.sleep(5)
+
 NODES['bitcoin'].write_conf(connect_port=NODES['bitcoin2'].port)
 NODES['bitcoin2'].write_conf(connect_port=NODES['bitcoin'].port)
 NODES['sidechain'].write_conf(NODES['bitcoin'], NODES['sidechain2'].port)
-NODES['sidechain2'].write_conf(NODES['bitcoin'], NODES['sidechain'].port)
+NODES['sidechain2'].write_conf(NODES['bitcoin2'], NODES['sidechain'].port)
+
+time.sleep(5)
 
 try:
     # Default is 8, meaning 8+2 confirms for wallet acceptance normally
