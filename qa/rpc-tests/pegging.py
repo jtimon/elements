@@ -69,7 +69,7 @@ class Node():
         daemonstart = "%s/%sd -datadir=%s %s" % (daemon_bin_path, self.daemonname, self.datadir, extra_args)
         subprocess.Popen(daemonstart.split(), stdout=subprocess.PIPE)
 
-    def write_bitcoin_conf(self, f):
+    def write_bitcoin_conf(self, f, connect_port):
         f.write("regtest=1\n")
         f.write("rpcuser=bitcoinrpc\n")
         f.write("discover=0\n")
@@ -77,10 +77,12 @@ class Node():
         f.write("testnet=0\n")
         f.write("txindex=1\n")
         f.write("daemon=1\n")
-        f.write("listen=0\n")
         f.write("rpcpassword="+self.password+"\n")
         f.write("rpcport="+str(self.rpcport)+"\n")
         f.write("discover=0\n")
+        f.write("port="+str(self.port)+"\n")
+        f.write("connect=localhost:"+str(connect_port)+"\n")
+        f.write("listen=1\n")
 
     def write_sidechain_conf(self, f, mainchain_node, connect_port):
         f.write("regtest=1\n")
@@ -127,8 +129,8 @@ class Node():
     def write_conf(self, mainchain_node=None, connect_port=None):
         with open(os.path.join(self.datadir, "%s.conf" % self.daemonname), 'w') as f:
             print('self.nodename', self.nodename)
-            if self.nodename == 'bitcoin_bitcoin':
-                self.write_bitcoin_conf(f)
+            if self.nodename == 'bitcoin_bitcoin' or self.nodename == 'bitcoin_bitcoin2':
+                self.write_bitcoin_conf(f, connect_port)
             elif self.nodename == 'elements_sidechain':
                 self.write_sidechain_conf(f, mainchain_node, connect_port)
             elif self.nodename == 'elements_sidechain2':
@@ -139,11 +141,13 @@ class Node():
 PORT_DEALER = SingletonPort()
 NODES = {
     'bitcoin': Node('bitcoin', 'bitcoin', port_dealer=PORT_DEALER),
+    'bitcoin2': Node('bitcoin', 'bitcoin2', port_dealer=PORT_DEALER),
     'sidechain': Node('elements', 'sidechain', port_dealer=PORT_DEALER),
     'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
 }
 
-NODES['bitcoin'].write_conf()
+NODES['bitcoin'].write_conf(connect_port=NODES['bitcoin2'].port)
+NODES['bitcoin2'].write_conf(connect_port=NODES['bitcoin'].port)
 NODES['sidechain'].write_conf(NODES['bitcoin'], NODES['sidechain2'].port)
 NODES['sidechain2'].write_conf(NODES['bitcoin'], NODES['sidechain'].port)
 
@@ -153,8 +157,9 @@ try:
     sidechain_args = " -peginconfirmationdepth=10 "
 
     # Start daemons
-    print("Starting daemons at "+NODES['bitcoin'].datadir+", "+NODES['sidechain'].datadir+" and "+NODES['sidechain2'].datadir)
+    print("Starting daemons at "+NODES['bitcoin'].datadir+", "+NODES['bitcoin2'].datadir+", "+NODES['sidechain'].datadir+" and "+NODES['sidechain2'].datadir)
     NODES['bitcoin'].init_daemon(bitcoin_bin_path)
+    NODES['bitcoin2'].init_daemon(bitcoin_bin_path)
     NODES['sidechain'].init_daemon(sidechain_bin_path, sidechain_args)
     NODES['sidechain2'].init_daemon(sidechain_bin_path, sidechain_args)
 
@@ -162,6 +167,7 @@ try:
     time.sleep(3)
 
     bitcoin = AuthServiceProxy("http://bitcoinrpc:"+NODES['bitcoin'].password+"@127.0.0.1:"+str(NODES['bitcoin'].rpcport))
+    bitcoin2 = AuthServiceProxy("http://bitcoinrpc:"+NODES['bitcoin2'].password+"@127.0.0.1:"+str(NODES['bitcoin2'].rpcport))
     sidechain = AuthServiceProxy("http://sidechainrpc:"+NODES['sidechain'].password+"@127.0.0.1:"+str(NODES['sidechain'].rpcport))
     sidechain2 = AuthServiceProxy("http://sidechainrpc2:"+NODES['sidechain2'].password+"@127.0.0.1:"+str(NODES['sidechain2'].rpcport))
     print("Daemons started, making blocks to get funds")
@@ -263,5 +269,6 @@ except Exception as e:
 
 print("Stopping daemons and cleaning up")
 bitcoin.stop()
+bitcoin2.stop()
 sidechain.stop()
 sidechain2.stop()
