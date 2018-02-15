@@ -53,8 +53,9 @@ class SingletonPort():
         return self.port
 
 class Node():
-    def __init__(self, nodename='test', port_dealer=SingletonPort()):
-        self.nodename = nodename
+    def __init__(self, daemonname='elements', nodename='test', port_dealer=SingletonPort()):
+        self.daemonname = daemonname
+        self.nodename = '%s_%s' % (self.daemonname, nodename)
         self.port = port_dealer.next_port()
         self.rpcport = port_dealer.next_port()
         self.datadir = get_temp_dir(nodename)
@@ -66,9 +67,9 @@ class Node():
 
 PORT_DEALER = SingletonPort()
 NODES = {
-    'bitcoin': Node('bitcoin', port_dealer=PORT_DEALER),
-    'sidechain': Node('sidechain', port_dealer=PORT_DEALER),
-    'sidechain2': Node('sidechain2', port_dealer=PORT_DEALER),
+    'bitcoin': Node('bitcoin', 'bitcoin', port_dealer=PORT_DEALER),
+    'sidechain': Node('elements', 'sidechain', port_dealer=PORT_DEALER),
+    'sidechain2': Node('elements', 'sidechain2', port_dealer=PORT_DEALER),
 }
 
 bitcoin_datadir = NODES['bitcoin'].datadir
