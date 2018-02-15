@@ -44,6 +44,16 @@ def get_pseudorandom_str(str_length=10):
 def get_temp_dir(nodename):
     return "/tmp/%s_%s" % (nodename, get_pseudorandom_str())
 
+class SingletonPort():
+    def __init__(self, ):
+        self.port = 8000 + os.getpid()%999
+
+    def next_port(self):
+        self.port = self.port + 1
+        return self.port
+
+PORT_DEALER = SingletonPort()
+    
 bitcoin_datadir = get_temp_dir('bitcoin')
 bitcoin_pass = get_pseudorandom_str()
 sidechain_datadir = get_temp_dir('sidechain')
@@ -51,11 +61,11 @@ sidechain_pass = get_pseudorandom_str()
 sidechain2_datadir = get_temp_dir('sidechain2')
 sidechain2_pass = get_pseudorandom_str()
 
-bitcoin_port = 8000 + os.getpid()%999
-sidechain_port = bitcoin_port + 1
-sidechain2_port = bitcoin_port + 2
-sidechain1_p2p_port = bitcoin_port + 3
-sidechain2_p2p_port = bitcoin_port + 4
+bitcoin_port = PORT_DEALER.next_port()
+sidechain_port = PORT_DEALER.next_port()
+sidechain2_port = PORT_DEALER.next_port()
+sidechain1_p2p_port = PORT_DEALER.next_port()
+sidechain2_p2p_port = PORT_DEALER.next_port()
 
 os.makedirs(bitcoin_datadir)
 os.makedirs(sidechain_datadir)
