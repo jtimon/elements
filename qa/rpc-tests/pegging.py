@@ -19,14 +19,18 @@ if len(sys.argv) > 2:
 print(bitcoin_bin_path)
 print(sidechain_bin_path)
 
+import pdb
 # Sync mempool, make a block, sync blocks
 def sync_all(sidechain, sidechain2):
     timeout = 20
+    pdb.set_trace()
     while len(sidechain.getrawmempool()) != len(sidechain2.getrawmempool()):
         time.sleep(1)
         timeout -= 1
         if timeout == 0:
+            pdb.set_trace()
             raise Exception("Peg-in has failed to propagate.")
+    pdb.set_trace()
     block = sidechain2.generate(1)
     while sidechain.getblockcount() != sidechain2.getblockcount():
         time.sleep(1)
@@ -225,6 +229,7 @@ try:
     # Should succeed via wallet lookup for address match, and when given
     pegtxid1 = sidechain.claimpegin(raw, proof)
 
+    # import pdb; pdb.set_trace()
     # Will invalidate the block that confirms this transaction later
     sync_all(bitcoin, bitcoin2)
     blockhash = sync_all(sidechain, sidechain2)
@@ -285,7 +290,8 @@ except JSONRPCException as e:
         print(e.error)
 except Exception as e:
         print("Pegging testing failed, aborting:")
-        print(e)
+        pdb.set_trace()
+        print(e.message)
 
 print("Stopping daemons and cleaning up")
 bitcoin.stop()
