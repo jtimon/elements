@@ -61,14 +61,16 @@ class Node():
         self.password = get_pseudorandom_str()
         os.makedirs(self.datadir)
 
-    
+    def __del__(self):
+        shutil.rmtree(self.datadir)
+
 PORT_DEALER = SingletonPort()
 NODES = {
     'bitcoin': Node('bitcoin', port_dealer=PORT_DEALER),
     'sidechain': Node('sidechain', port_dealer=PORT_DEALER),
     'sidechain2': Node('sidechain2', port_dealer=PORT_DEALER),
 }
-    
+
 bitcoin_datadir = NODES['bitcoin'].datadir
 bitcoin_pass = NODES['bitcoin'].password
 bitcoin_port = NODES['bitcoin'].rpcport
@@ -258,9 +260,3 @@ print("Stopping daemons and cleaning up")
 bitcoin.stop()
 sidechain.stop()
 sidechain2.stop()
-
-time.sleep(5)
-
-shutil.rmtree(sidechain2_datadir)
-shutil.rmtree(sidechain_datadir)
-shutil.rmtree(bitcoin_datadir)
