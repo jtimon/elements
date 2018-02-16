@@ -165,6 +165,7 @@ try:
     sidechain = AuthServiceProxy("http://sidechainrpc:"+NODES['sidechain'].password+"@127.0.0.1:"+str(NODES['sidechain'].rpcport))
     sidechain2 = AuthServiceProxy("http://sidechainrpc2:"+NODES['sidechain2'].password+"@127.0.0.1:"+str(NODES['sidechain2'].rpcport))
     print("Daemons started, making blocks to get funds")
+    time.sleep(3)
 
     bitcoin.generate(101)
     sidechain.generate(101)
