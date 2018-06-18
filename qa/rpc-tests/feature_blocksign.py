@@ -18,6 +18,19 @@ def wif(pk):
     # Base58Check version for regtest WIF keys is 0xef = 239
     return byte_to_base58(pk, 239)
 
+# The signblockscript is a Bitcoin Script k-of-n multisig script.
+def make_signblockscript(num_nodes, required_signers, keys):
+    assert(num_nodes >= required_signers)
+    script = "{}".format(50 + required_signers)
+    for i in range(num_nodes):
+        k = keys[i]
+        script += "41"
+        script += k.get_pubkey().hex()
+    script += "{}".format(50 + num_nodes) # num keys
+    script += "ae" # OP_CHECKMULTISIG
+    print('signblockscript', script)
+    return script
+
 class BlockSignTest(BitcoinTestFramework):
 
     # Dynamically generate N keys to be used for block signing.
@@ -36,26 +49,13 @@ class BlockSignTest(BitcoinTestFramework):
             self.keys.append(k)
             self.wifs.append(wif(pk_bytes))
 
-    # The signblockscript is a Bitcoin Script k-of-n multisig script.
-    def make_signblockscript(self):
-        script = "{}".format(50 + self.required_signers)
-        for i in range(self.num_nodes):
-            k = self.keys[i]
-            script += "41"
-            script += k.get_pubkey().hex()
-        script += "{}".format(50 + self.num_nodes) # num keys
-        script += "ae" # OP_CHECKMULTISIG
-        return script
-
-    def __init__(self, num_nodes=3, required_signers=3):
-        assert(num_nodes >= required_signers)
+    def __init__(self, num_nodes, required_signers):
         super().__init__()
         self.setup_clean_chain = True
         self.num_nodes = num_nodes
         self.init_keys(self.num_nodes)
         self.required_signers = required_signers
-        signblockscript = self.make_signblockscript()
-        print('signblockscript', signblockscript)
+        signblockscript = make_signblockscript(num_nodes, required_signers, self.keys)
         self.extra_args = [[
             "-chain=blocksign",
             # We can't validate pegins since we don't run the parent chain.
