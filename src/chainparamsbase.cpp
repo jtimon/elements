@@ -13,7 +13,7 @@
 
 const std::string CBaseChainParams::MAIN = "main";
 const std::string CBaseChainParams::TESTNET = "test";
-const std::string CBaseChainParams::SIGNET = "sig";
+const std::string CBaseChainParams::SIGNET = "signet";
 const std::string CBaseChainParams::REGTEST = "regtest";
 
 void SetupChainParamsBaseOptions()

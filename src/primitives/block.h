@@ -47,7 +47,6 @@ public:
 
     CBlockHeader()
     {
-        nVersion = 0;
         SetNull();
     }
 
