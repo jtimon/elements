@@ -35,6 +35,8 @@ class FedPegTest(BitcoinTestFramework):
                           help="Use a different binary for launching nodes")
         parser.add_option("--parent_type", dest="parent_type", default="elements",
                           help="Type of parent nodes {elements, bitcoin, signet}")
+        parser.add_option("--signet_config_path", dest="signet_config_path", default="",
+                          help="Path to write down the generated config for signet into files.")
 
     def setup_network(self, split=False):
         self.nodes = []
@@ -45,6 +47,10 @@ class FedPegTest(BitcoinTestFramework):
 
         if self.options.parent_type == 'bitcoin' and self.options.parent_binpath == "":
             raise Exception("Can't run with --parent_type=bitcoin without specifying --parent_binpath")
+
+        if self.options.signet_config_path != "" and self.options.parent_type != 'signet':
+            raise Exception("Can't run with --signet_config_path=%s unless --parent_type=signet" %
+                            self.options.signet_config_path)
 
         self.binary = self.options.parent_binpath if self.options.parent_binpath != "" else None
 
@@ -71,8 +77,14 @@ class FedPegTest(BitcoinTestFramework):
             script = script.CScript([pubkey, script.OP_CHECKSIG])
             blockscript = hexlify(script).decode('ascii')
 
-            print('blockscript', blockscript)
-            print('wif', wif)
+            if self.options.signet_config_path == "":
+                print('blockscript', blockscript)
+                print('wif', wif)
+            else:
+                with open(os.path.join(self.options.signet_config_path, "signet_blockscript.txt"), 'w', encoding='utf8') as f:
+                    f.write(blockscript + "\n")
+                with open(os.path.join(self.options.signet_config_path, "wif.txt"), 'w', encoding='utf8') as f:
+                    f.write(wif + "\n")
 
         # Parent chain args
         for n in range(2):
