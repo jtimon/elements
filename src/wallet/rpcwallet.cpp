@@ -417,7 +417,7 @@ static UniValue sendtoaddress(const JSONRPCRequest& request)
             "       \"UNSET\"\n"
             "       \"ECONOMICAL\"\n"
             "       \"CONSERVATIVE\""},
-                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Hex asset id or asset label for balance."},
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                     {"ignoreblindfail", RPCArg::Type::BOOL, /* default */ "true", "Return a transaction even when a blinding attempt fails due to number of blinded inputs/outputs."},
                 },
                 RPCResult{
@@ -635,14 +635,14 @@ static UniValue getreceivedbyaddress(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"getreceivedbyaddress",
                 "\nReturns the total amount received by the given address in transactions with at least minconf confirmations.\n",
                 {
                     {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The bitcoin address for transactions."},
                     {"minconf", RPCArg::Type::NUM, /* default */ "1", "Only include transactions confirmed at least this many times."},
-                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Hex asset id or asset label for balance."},
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                 },
                 RPCResult{
             "amount   (numeric) The total amount in " + CURRENCY_UNIT + " received at this address.\n"
@@ -723,14 +723,14 @@ static UniValue getreceivedbylabel(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"getreceivedbylabel",
                 "\nReturns the total amount received by addresses with <label> in transactions with at least [minconf] confirmations.\n",
                 {
                     {"label", RPCArg::Type::STR, RPCArg::Optional::NO, "The selected label, may be the default label using \"\"."},
                     {"minconf", RPCArg::Type::NUM, /* default */ "1", "Only include transactions confirmed at least this many times."},
-                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Hex asset id or asset label for balance."},
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                 },
                 RPCResult{
             "amount              (numeric) The total amount in " + CURRENCY_UNIT + " received for this label.\n"
@@ -816,7 +816,7 @@ static UniValue getbalance(const JSONRPCRequest& request)
                     {"dummy", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Remains for backward compatibility. Must be excluded or set to \"*\"."},
                     {"minconf", RPCArg::Type::NUM, /* default */ "0", "Only include transactions confirmed at least this many times."},
                     {"include_watchonly", RPCArg::Type::BOOL, /* default */ "false", "Also include balance in watch-only addresses (see 'importaddress')"},
-                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Hex asset id or asset label for balance."},
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                 },
                 RPCResult{
             "amount              (numeric) The total amount in " + CURRENCY_UNIT + " received for this wallet.\n"
@@ -1269,7 +1269,7 @@ static UniValue ListReceived(interfaces::Chain::Lock& locked_chain, CWallet * co
 
     bool has_filtered_address = false;
     CTxDestination filtered_address = CNoDestination();
-    if (!by_label && params.size() > 3 && params[3].get_str() != "") {
+    if (!by_label && params[3].isStr() && params[3].get_str() != "") {
         if (!IsValidDestinationString(params[3].get_str())) {
             throw JSONRPCError(RPC_WALLET_ERROR, "address_filter parameter was invalid");
         }
@@ -1379,7 +1379,7 @@ static UniValue ListReceived(interfaces::Chain::Lock& locked_chain, CWallet * co
             if(fIsWatchonly)
                 obj.pushKV("involvesWatchonly", true);
             obj.pushKV("address",       EncodeDestination(address));
-            obj.pushKV("amount",        AmountMapToUniv(mapAmount, ""));
+            obj.pushKV("amount",        AmountMapToUniv(mapAmount, strasset));
             obj.pushKV("confirmations", (nConf == std::numeric_limits<int>::max() ? 0 : nConf));
             obj.pushKV("label", label);
             UniValue transactions(UniValue::VARR);
@@ -1432,7 +1432,7 @@ static UniValue listreceivedbyaddress(const JSONRPCRequest& request)
                     {"include_empty", RPCArg::Type::BOOL, /* default */ "false", "Whether to include addresses that haven't received any payments."},
                     {"include_watchonly", RPCArg::Type::BOOL, /* default */ "false", "Whether to include watch-only addresses (see 'importaddress')."},
                     {"address_filter", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "If present, only return information on this address."},
-                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Hex asset id or asset label for balance."},
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                 },
                 RPCResult{
             "[\n"
@@ -1906,13 +1906,14 @@ static UniValue gettransaction(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"gettransaction",
                 "\nGet detailed information about in-wallet transaction <txid>\n",
                 {
                     {"txid", RPCArg::Type::STR, RPCArg::Optional::NO, "The transaction id"},
                     {"include_watchonly", RPCArg::Type::BOOL, /* default */ "false", "Whether to include watch-only addresses in balance calculation and details[]"},
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
                 },
                 RPCResult{
             "{\n"
@@ -1971,6 +1972,11 @@ static UniValue gettransaction(const JSONRPCRequest& request)
         if(request.params[1].get_bool())
             filter = filter | ISMINE_WATCH_ONLY;
 
+    std::string asset = "";
+    if (request.params[2].isStr() && !request.params[2].get_str().empty()) {
+        asset = request.params[2].get_str();
+    }
+
     UniValue entry(UniValue::VOBJ);
     auto it = pwallet->mapWallet.find(hash);
     if (it == pwallet->mapWallet.end()) {
@@ -1992,7 +1998,7 @@ static UniValue gettransaction(const JSONRPCRequest& request)
         nFee[::policyAsset] = wtx.IsFromMe(filter) ? total_out - nDebit[::policyAsset] : 0;
     }
 
-    entry.pushKV("amount", AmountMapToUniv(nNet - nFee, ""));
+    entry.pushKV("amount", AmountMapToUniv(nNet - nFee, asset));
     if (wtx.IsFromMe(filter))
         entry.pushKV("fee", AmountMapToUniv(nFee, ""));
 
@@ -2628,11 +2634,13 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() != 0)
+    if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
             RPCHelpMan{"getwalletinfo",
                 "Returns an object containing various wallet state info.\n",
-                {},
+                {
+                    {"assetlabel", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Hex asset id or asset label for balance."},
+                },
                 RPCResult{
             "{\n"
             "  \"walletname\": xxxxx,               (string) the wallet name\n"
@@ -2668,9 +2676,14 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     size_t kpExternalSize = pwallet->KeypoolCountExternalKeys();
     obj.pushKV("walletname", pwallet->GetName());
     obj.pushKV("walletversion", pwallet->GetVersion());
-    obj.pushKV("balance",       AmountMapToUniv(pwallet->GetBalance(), ""));
-    obj.pushKV("unconfirmed_balance", AmountMapToUniv(pwallet->GetUnconfirmedBalance(), ""));
-    obj.pushKV("immature_balance",    AmountMapToUniv(pwallet->GetImmatureBalance(), ""));
+
+    std::string asset = "";
+    if (request.params[0].isStr() && !request.params[0].get_str().empty()) {
+        asset = request.params[0].get_str();
+    }
+    obj.pushKV("balance",       AmountMapToUniv(pwallet->GetBalance(), asset));
+    obj.pushKV("unconfirmed_balance", AmountMapToUniv(pwallet->GetUnconfirmedBalance(), asset));
+    obj.pushKV("immature_balance",    AmountMapToUniv(pwallet->GetImmatureBalance(), asset));
     obj.pushKV("txcount",       (int)pwallet->mapWallet.size());
     obj.pushKV("keypoololdest", pwallet->GetOldestKeyPoolTime());
     obj.pushKV("keypoolsize", (int64_t)kpExternalSize);
@@ -6514,14 +6527,14 @@ static const CRPCCommand commands[] =
     { "wallet",             "encryptwallet",                    &encryptwallet,                 {"passphrase"} },
     { "wallet",             "getaddressesbylabel",              &getaddressesbylabel,           {"label"} },
     { "wallet",             "getaddressinfo",                   &getaddressinfo,                {"address"} },
-    { "wallet",             "getbalance",                       &getbalance,                    {"dummy","minconf","include_watchonly"} },
+    { "wallet",             "getbalance",                       &getbalance,                    {"dummy","minconf","include_watchonly","assetlabel"} },
     { "wallet",             "getnewaddress",                    &getnewaddress,                 {"label","address_type"} },
     { "wallet",             "getrawchangeaddress",              &getrawchangeaddress,           {"address_type"} },
-    { "wallet",             "getreceivedbyaddress",             &getreceivedbyaddress,          {"address","minconf"} },
-    { "wallet",             "getreceivedbylabel",               &getreceivedbylabel,            {"label","minconf"} },
-    { "wallet",             "gettransaction",                   &gettransaction,                {"txid","include_watchonly"} },
+    { "wallet",             "getreceivedbyaddress",             &getreceivedbyaddress,          {"address","minconf","assetlabel"} },
+    { "wallet",             "getreceivedbylabel",               &getreceivedbylabel,            {"label","minconf","assetlabel"} },
+    { "wallet",             "gettransaction",                   &gettransaction,                {"txid","include_watchonly","assetlabel"} },
     { "wallet",             "getunconfirmedbalance",            &getunconfirmedbalance,         {} },
-    { "wallet",             "getwalletinfo",                    &getwalletinfo,                 {} },
+    { "wallet",             "getwalletinfo",                    &getwalletinfo,                 {"assetlabel"} },
     { "wallet",             "importaddress",                    &importaddress,                 {"address","label","rescan","p2sh"} },
     { "wallet",             "importmulti",                      &importmulti,                   {"requests","options"} },
     { "wallet",             "importprivkey",                    &importprivkey,                 {"privkey","label","rescan"} },
@@ -6532,7 +6545,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listaddressgroupings",             &listaddressgroupings,          {} },
     { "wallet",             "listlabels",                       &listlabels,                    {"purpose"} },
     { "wallet",             "listlockunspent",                  &listlockunspent,               {} },
-    { "wallet",             "listreceivedbyaddress",            &listreceivedbyaddress,         {"minconf","include_empty","include_watchonly","address_filter"} },
+    { "wallet",             "listreceivedbyaddress",            &listreceivedbyaddress,         {"minconf","include_empty","include_watchonly","address_filter","assetlabel"} },
     { "wallet",             "listreceivedbylabel",              &listreceivedbylabel,           {"minconf","include_empty","include_watchonly"} },
     { "wallet",             "listsinceblock",                   &listsinceblock,                {"blockhash","target_confirmations","include_watchonly","include_removed"} },
     { "wallet",             "listtransactions",                 &listtransactions,              {"label|dummy","count","skip","include_watchonly"} },
